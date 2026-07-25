@@ -8,6 +8,8 @@ services:
     image: dungi3/golang-learn-bookmark_service:latest
     build: .
     container_name: bookmark_service
+    env_file:
+      - ./bookmark_service/.env
     depends_on:
       - redis
 
