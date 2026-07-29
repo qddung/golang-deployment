@@ -11,23 +11,22 @@ jobs:
       - name: Run script
         run: |
           sudo apt-get update && sudo apt-get install -y sshpass
-          
-          # 1. Bỏ -tt để SSH tự đóng ngay khi hết lệnh (Non-interactive)
-          # 2. Dùng nháy đơn ' ' để bao bọc toàn bộ khối lệnh, tránh lỗi biên dịch
-          # 3. Kết thúc bằng exit 0 để đảm bảo SSH đóng phiên làm việc
-          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh \
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -tt \
             -o StrictHostKeyChecking=no \
             -o ServerAliveInterval=15 \
-            -o ServerAliveCountMax=3 \
-            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} '
-              echo "Connected via sshpass"
-              cd /app/golang-deployment || exit 1
+            -o ServerAliveCountMax=120 \
+            -o TCPKeepAlive=yes \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+              echo 'Connected via sshpass'
+              cd /app/golang-deployment
               git fetch
               git checkout main
               git pull origin main
-              cd deployment || exit 1
+              cd deployment
+              docker ps -f "name=bookmark_service" --format '{{.Names}}' | grep -q bookmark_service && docker rm -f bookmark_service
               docker compose pull bookmark_service
               docker compose up -d --remove-orphans bookmark_service
               docker system prune -f
+              # Ép đóng phiên SSH trên server để trả quyền điều khiển về cho GitHub Runner
               exit 0
-            '
+          EOF
