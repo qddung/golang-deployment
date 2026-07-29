@@ -2,43 +2,21 @@ name: cd-pipeline
 on:
   push:
     branches:
-      - exer-5/cd-pipeline
+      - main
   workflow_dispatch:
 jobs:
   cd_pipeline_bookmark_service:
     runs-on: ubuntu-latest
     steps:
-      - name: Check SSH secrets
-        id: ssh_check
-        shell: bash
+      - name: Run script
         run: |
-          if [ -n "${{ secrets.SSH_HOST }}" ] && [ -n "${{ secrets.SSH_USERNAME }}" ] && [ -n "${{ secrets.SSH_PASSWORD }}" ]; then
-            echo "has_ssh=true" >> "$GITHUB_OUTPUT"
-            echo "SSH deployment secrets detected."
-          else
-            echo "has_ssh=false" >> "$GITHUB_OUTPUT"
-            echo "SSH deployment skipped because one or more GitHub secrets are not configured."
-          fi
-
-      - name: Run deployment via SSH
-        if: steps.ssh_check.outputs.has_ssh == 'true'
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-        run: |
-          set -euo pipefail
-
-          sudo apt-get update
-          sudo apt-get install -y sshpass
-
-          export SSHPASS="$SSH_PASSWORD"
-          sshpass -e ssh -tt \
+          sudo apt-get update && sudo apt-get install -y sshpass
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -tt \
             -o StrictHostKeyChecking=no \
             -o ServerAliveInterval=15 \
             -o ServerAliveCountMax=120 \
             -o TCPKeepAlive=yes \
-            "$SSH_USERNAME@$SSH_HOST" <<'EOF'
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
               echo 'Connected via sshpass'
               cd /app/golang-deployment
               git fetch
