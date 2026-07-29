@@ -11,7 +11,7 @@ jobs:
       - name: Run script
         run: |
           sudo apt-get update && sudo apt-get install -y sshpass
-          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -tt \
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh \
             -o StrictHostKeyChecking=no \
             -o ServerAliveInterval=15 \
             -o ServerAliveCountMax=120 \
