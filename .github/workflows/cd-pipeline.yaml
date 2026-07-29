@@ -8,18 +8,26 @@ jobs:
   cd_pipeline_bookmark_service:
     runs-on: ubuntu-latest
     steps:
-      - name: Run script
+      - name: Check SSH secrets
+        id: ssh_check
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.SSH_HOST }}" ] && [ -n "${{ secrets.SSH_USERNAME }}" ] && [ -n "${{ secrets.SSH_PASSWORD }}" ]; then
+            echo "has_ssh=true" >> "$GITHUB_OUTPUT"
+            echo "SSH deployment secrets detected."
+          else
+            echo "has_ssh=false" >> "$GITHUB_OUTPUT"
+            echo "SSH deployment skipped because one or more GitHub secrets are not configured."
+          fi
+
+      - name: Run deployment via SSH
+        if: steps.ssh_check.outputs.has_ssh == 'true'
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
         run: |
           set -euo pipefail
-
-          if [ -z "$SSH_HOST" ] || [ -z "$SSH_USERNAME" ] || [ -z "$SSH_PASSWORD" ]; then
-            echo "Missing SSH connection secrets. Please configure SSH_HOST, SSH_USERNAME, and SSH_PASSWORD."
-            exit 1
-          fi
 
           sudo apt-get update
           sudo apt-get install -y sshpass
