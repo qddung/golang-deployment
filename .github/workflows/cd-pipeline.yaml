@@ -11,14 +11,16 @@ jobs:
       - name: Run script
         run: |
           sudo apt-get update && sudo apt-get install -y sshpass
-          # Không dùng "<<", truyền chuỗi lệnh trực tiếp sau thông tin user@host
-          # Bỏ tham số "-tt" để SSH chạy ở chế độ phi tương tác (Non-interactive), tự động CLOSE khi hết lệnh
+          
+          # 1. Bỏ -tt để SSH tự đóng ngay khi hết lệnh (Non-interactive)
+          # 2. Dùng nháy đơn ' ' để bao bọc toàn bộ khối lệnh, tránh lỗi biên dịch
+          # 3. Kết thúc bằng exit 0 để đảm bảo SSH đóng phiên làm việc
           sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh \
             -o StrictHostKeyChecking=no \
             -o ServerAliveInterval=15 \
             -o ServerAliveCountMax=3 \
-            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
-              echo 'Connected via sshpass'
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} '
+              echo "Connected via sshpass"
               cd /app/golang-deployment || exit 1
               git fetch
               git checkout main
@@ -28,4 +30,4 @@ jobs:
               docker compose up -d --remove-orphans bookmark_service
               docker system prune -f
               exit 0
-            "
+            '
