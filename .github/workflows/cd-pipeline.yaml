@@ -25,8 +25,7 @@ jobs:
               cd deployment
               docker ps -f "name=bookmark_service" --format '{{.Names}}' | grep -q bookmark_service && docker rm -f bookmark_service
               docker compose pull bookmark_service
-              docker compose down
-              docker compose up -d
+              docker compose up -d --remove-orphans bookmark_service
               docker system prune -f
               # Ép đóng phiên SSH trên server để trả quyền điều khiển về cho GitHub Runner
               exit 0
