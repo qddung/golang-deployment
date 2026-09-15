@@ -3,7 +3,7 @@ services:
     image: redis:alpine
     container_name: redis
   bookmark_service:
-    image: dungi3/golang-learn-bookmark_service:v0.0.9
+    image: dungi3/golang-learn-bookmark_service:v0.0.10
     build: .
     container_name: bookmark_service
     env_file:
